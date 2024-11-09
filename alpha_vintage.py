@@ -32,9 +32,9 @@ def process_data(data, timeframe):
     
     return dates, prices_open, prices_high, prices_low, prices_close, volumes
 
-def create_advanced_chart():
-    # Fetch data from different timeframes
-    daily_data = fetch_crypto_data('DAILY')
+def create_advanced_chart(timeframe='DAILY'):
+    # Fetch data from the specified timeframe
+    data = fetch_crypto_data(timeframe)
     
     # Create figure with secondary y-axis for volume
     fig = make_subplots(
@@ -44,8 +44,8 @@ def create_advanced_chart():
         row_heights=[0.7, 0.3]
     )
 
-    # Process daily data
-    dates, opens, highs, lows, closes, volumes = process_data(daily_data, 'Daily')
+    # Process data
+    dates, opens, highs, lows, closes, volumes = process_data(data, timeframe.capitalize())
 
     # Add candlestick chart
     fig.add_trace(
@@ -64,9 +64,8 @@ def create_advanced_chart():
         row=1, col=1
     )
 
-    # Add volume bars
+    # Add volume bars with color-coded bars
     colors = ['#26A69A' if closes[i] >= opens[i] else '#EF5350' for i in range(len(closes))]
-    
     fig.add_trace(
         go.Bar(
             x=dates,
@@ -78,20 +77,24 @@ def create_advanced_chart():
         row=2, col=1
     )
 
-    # Update layout
+    # Update layout for dark mode and improved interaction
     fig.update_layout(
         title={
             'text': 'Bitcoin/EUR Price',
-            'y':0.95,
-            'x':0.5,
+            'y': 0.95,
+            'x': 0.5,
             'xanchor': 'center',
             'yanchor': 'top'
         },
         yaxis_title='Price (EUR)',
         yaxis2_title='Volume',
-        plot_bgcolor='white',
-        paper_bgcolor='white',
+        plot_bgcolor='#1e1e1e',
+        paper_bgcolor='#1e1e1e',
+        font=dict(color='#cfcfcf'),
+        dragmode='pan',  # Set default drag mode to pan
         hovermode='x unified',
+        xaxis_rangeslider_visible=False,
+        margin=dict(l=50, r=50, t=80, b=50),
         legend=dict(
             orientation="h",
             yanchor="bottom",
@@ -99,14 +102,17 @@ def create_advanced_chart():
             xanchor="right",
             x=1
         ),
-        margin=dict(l=50, r=50, t=80, b=50),
-        xaxis_rangeslider_visible=False
+        modebar=dict(
+            bgcolor='rgba(30,30,30,0.9)',
+            color='#cfcfcf',
+            activecolor='#ffffff'
+        )
     )
 
-    # Update axes
+    # Update axes colors for dark mode
     fig.update_xaxes(
-        gridcolor='lightgrey',
-        showgrid=True,
+        gridcolor='rgba(128,128,128,0.2)',
+        tickfont=dict(color='#a9a9a9'),
         rangeslider_visible=False,
         rangeselector=dict(
             buttons=list([
@@ -117,36 +123,35 @@ def create_advanced_chart():
                 dict(count=6, label="6M", step="month", stepmode="backward"),
                 dict(count=1, label="1Y", step="year", stepmode="backward"),
                 dict(step="all")
-            ])
+            ]),
+            bgcolor='#1e1e1e',
+            activecolor='#666666',
+            font=dict(color='#cfcfcf')
         )
     )
 
-    fig.update_yaxes(
-        gridcolor='lightgrey',
-        showgrid=True,
-        row=1, col=1
-    )
-
-    fig.update_yaxes(
-        gridcolor='lightgrey',
-        showgrid=True,
-        row=2, col=1
-    )
-
-    # Update the style to match TradingView
-    fig.update_layout(
-        font=dict(
-            family="Trebuchet MS, Arial, sans-serif",
-            size=10,
-            color="#333333"
-        ),
-        dragmode='zoom',
-        selectdirection='h',
-        showlegend=False
-    )
+    # Update y-axes for both plots
+    for row in [1, 2]:
+        fig.update_yaxes(
+            gridcolor='rgba(128,128,128,0.2)',
+            tickfont=dict(color='#a9a9a9'),
+            row=row, col=1,
+            zerolinecolor='rgba(128,128,128,0.2)'
+        )
 
     return fig
 
-# Create and display the chart
+# Create and display the chart with config options for interactivity
 fig = create_advanced_chart()
-fig.show()
+fig.show(config={
+    'scrollZoom': True,           # Enable scroll zoom
+    'displayModeBar': True,       # Always show the mode bar
+    'modeBarButtonsToAdd': [      # Add additional tools
+        'drawopenpath', 
+        'eraseshape'
+    ],
+    'modeBarButtonsToRemove': [], # Keep all default buttons
+    'displaylogo': False,         # Remove plotly logo
+    'doubleClick': 'reset',       # Reset view on double click
+    'showTips': True,             # Show tips on hover over modebar buttons
+})
